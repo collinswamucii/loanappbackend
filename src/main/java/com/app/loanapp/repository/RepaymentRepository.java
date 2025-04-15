@@ -1,4 +1,7 @@
 package com.app.loanapp.repository;
 
-public class RepaymentRepository {
+import com.app.loanapp.entity.Repayment;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface RepaymentRepository extends JpaRepository<Repayment, Long> {
 }
