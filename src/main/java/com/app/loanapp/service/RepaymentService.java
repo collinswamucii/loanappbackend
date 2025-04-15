@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+@Service
 public class RepaymentService {
     @Autowired
     private RepaymentRepository repaymentRepository;
@@ -31,6 +32,7 @@ public class RepaymentService {
             repayment.setStatus("PENDING");
             schedule.add(repayment);
         }
+
         return repaymentRepository.saveAll(schedule);
     }
 
