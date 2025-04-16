@@ -51,8 +51,8 @@ public class PaymentService {
 
         // Select the loan with the soonest due date
         Loan selectedLoan = activeLoans.stream()
-                .filter(loan -> repaymentRepository.findFirstPendingByLoanId(loan.getId()).isPresent())
-                .min(Comparator.comparing(loan -> repaymentRepository.findFirstPendingByLoanId(loan.getId()).get().getDueDate()))
+                .filter(loan -> !repaymentRepository.findPendingByLoanId(loan.getId()).isEmpty())
+                .min(Comparator.comparing(loan -> repaymentRepository.findPendingByLoanId(loan.getId()).get(0).getDueDate()))
                 .orElseThrow(() -> new IllegalArgumentException("No loans with pending repayments found for customer with phone number: " + phoneNumber));
 
         // Update totalPaid
