@@ -1,6 +1,8 @@
 package com.app.loanapp.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 import java.util.Date;
@@ -16,6 +18,8 @@ public class Loan {
     private double principalAmount;
     private double interestRate;
     private int repaymentPeriod;
+    @NotBlank(message = "Frequency cannot be blank")
+    @Pattern(regexp = "^(WEEKLY|MONTHLY|YEARLY)$", message = "Frequency must be WEEKLY, MONTHLY, or YEARLY")
     private String frequency; //weekly, monthly, yearly
     private Date startDate;
     private double totalPaid;

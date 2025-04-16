@@ -17,17 +17,31 @@ public class RepaymentService {
 
     public List<Repayment> generateRepaymentSchedule(Loan loan) {
         List<Repayment> schedule = new ArrayList<>();
-        double monthlyPayment = calculateMonthlyPayment(
-                loan.getPrincipalAmount(), loan.getInterestRate(), loan.getRepaymentPeriod()
+        double paymentAmount = calculatePaymentAmount(
+                loan.getPrincipalAmount(), loan.getInterestRate(), loan.getRepaymentPeriod(), loan.getFrequency()
         );
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(loan.getStartDate());
 
         for (int i = 0; i < loan.getRepaymentPeriod(); i++) {
-            calendar.add(Calendar.MONTH, 1); // Assuming monthly frequency for simplicity
+            // Adjust the due date based on the frequency
+            switch (loan.getFrequency().toUpperCase()) {
+                case "WEEKLY":
+                    calendar.add(Calendar.WEEK_OF_YEAR, 1);
+                    break;
+                case "MONTHLY":
+                    calendar.add(Calendar.MONTH, 1);
+                    break;
+                case "YEARLY":
+                    calendar.add(Calendar.YEAR, 1);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid repayment frequency: " + loan.getFrequency());
+            }
+
             Repayment repayment = new Repayment();
             repayment.setLoan(loan);
-            repayment.setAmount(monthlyPayment);
+            repayment.setAmount(paymentAmount);
             repayment.setDueDate(calendar.getTime());
             repayment.setStatus("PENDING");
             schedule.add(repayment);
@@ -36,9 +50,17 @@ public class RepaymentService {
         return repaymentRepository.saveAll(schedule);
     }
 
-    private double calculateMonthlyPayment(double principal, double annualRate, int months) {
-        double monthlyRate = annualRate / 100 / 12;
-        return principal * (monthlyRate * Math.pow(1 + monthlyRate, months)) /
-                (Math.pow(1 + monthlyRate, months) - 1);
+    private double calculatePaymentAmount(double principal, double annualRate, int periods, String frequency) {
+        // Convert annual rate to the rate per period based on frequency
+        double ratePerPeriod = switch (frequency.toUpperCase()) {
+            case "WEEKLY" -> annualRate / 100 / 52; // 52 weeks in a year
+            case "MONTHLY" -> annualRate / 100 / 12; // 12 months in a year
+            case "YEARLY" -> annualRate / 100; // 1 year
+            default -> throw new IllegalArgumentException("Invalid repayment frequency: " + frequency);
+        };
+
+        // Calculate the payment amount using the formula for an annuity
+        return principal * (ratePerPeriod * Math.pow(1 + ratePerPeriod, periods)) /
+                (Math.pow(1 + ratePerPeriod, periods) - 1);
     }
 }
