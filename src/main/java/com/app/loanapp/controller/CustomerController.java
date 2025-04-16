@@ -1,6 +1,7 @@
 package com.app.loanapp.controller;
 
 import com.app.loanapp.entity.Customer;
+import com.app.loanapp.exception.NotFoundException;
 import com.app.loanapp.repository.CustomerRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,8 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/customers")
@@ -21,36 +22,33 @@ public class CustomerController {
     public ResponseEntity<Customer> createCustomer(@Valid @RequestBody Customer customer) {
         // Check if the phone number already exists
         if (customerRepository.findByPhone(customer.getPhone()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(null); // Could return a custom error message or object
+            throw new IllegalArgumentException("Phone number already exists");
         }
         return ResponseEntity.ok(customerRepository.save(customer));
     }
 
     @GetMapping
-    public List<Customer> getAllCustomers() {
-        return customerRepository.findAll();
+    public ResponseEntity<List<Customer>> getAllCustomers() {
+        return ResponseEntity.ok(customerRepository.findAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Customer> getCustomerById(@PathVariable Long id) {
-        return customerRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.ok(
+                customerRepository.findById(id)
+                        .orElseThrow(() -> new NotFoundException("Customer not found with ID: " + id))
+        );
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Customer> updateCustomer(@PathVariable Long id, @Valid @RequestBody Customer updatedCustomer) {
-        Optional<Customer> existingCustomerOpt = customerRepository.findById(id);
-        if (existingCustomerOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Customer not found with ID: " + id));
 
-        Customer customer = existingCustomerOpt.get();
         // Check if the new phone number is already taken by another customer
         if (!customer.getPhone().equals(updatedCustomer.getPhone()) &&
                 customerRepository.findByPhone(updatedCustomer.getPhone()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+            throw new IllegalArgumentException("Phone number already exists");
         }
 
         customer.setFirstName(updatedCustomer.getFirstName());
@@ -62,10 +60,10 @@ public class CustomerController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCustomer(@PathVariable Long id) {
-        if (customerRepository.existsById(id)) {
-            customerRepository.deleteById(id);
-            return ResponseEntity.ok().build();
+        if (!customerRepository.existsById(id)) {
+            throw new NotFoundException("Customer not found with ID: " + id);
         }
-        return ResponseEntity.notFound().build();
+        customerRepository.deleteById(id);
+        return ResponseEntity.ok().build();
     }
 }
