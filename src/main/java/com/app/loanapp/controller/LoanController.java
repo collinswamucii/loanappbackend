@@ -5,6 +5,7 @@ import com.app.loanapp.repository.CustomerRepository;
 import com.app.loanapp.repository.LoanRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,7 +34,13 @@ public class LoanController {
     }
 
     @GetMapping("/customer/{customerId}")
-    public List<Loan> getLoansByCustomer(@PathVariable Long customerId) {
-        return loanRepository.findByCustomerId(customerId);
+    public ResponseEntity<List<Loan>> getLoansByCustomer(@PathVariable Long customerId) {
+        List<Loan> loans = loanRepository.findByCustomerId(customerId);
+        if (loans.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204 No Content
+            // OR
+            // return new ResponseEntity<>(null, HttpStatus.NOT_FOUND); // 404 Not Found
+        }
+        return new ResponseEntity<>(loans, HttpStatus.OK); // 200 OK
     }
 }
