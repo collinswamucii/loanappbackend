@@ -3,6 +3,7 @@ package com.app.loanapp.controller;
 import com.app.loanapp.entity.Loan;
 import com.app.loanapp.repository.CustomerRepository;
 import com.app.loanapp.repository.LoanRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class LoanController {
     private CustomerRepository customerRepository;
 
     @PostMapping
-    public ResponseEntity<Loan> createLoan(@RequestBody Loan loan) {
+    public ResponseEntity<Loan> createLoan(@Valid @RequestBody Loan loan) {
         return customerRepository.findById(loan.getCustomer().getId())
                 .map(customer -> {
                     loan.setCustomer(customer);
