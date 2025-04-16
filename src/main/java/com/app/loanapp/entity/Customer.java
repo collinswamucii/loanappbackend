@@ -1,6 +1,7 @@
 package com.app.loanapp.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Entity
@@ -13,5 +14,6 @@ public class Customer {
     private String lastName;
     private String email;
     @Column(unique = true)
+    @NotBlank(message = "Phone Number cannot be blank")
     private String phone;
 }
