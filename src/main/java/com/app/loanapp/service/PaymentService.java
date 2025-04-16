@@ -79,13 +79,8 @@ public class PaymentService {
         // Save updated repayments
         repaymentRepository.saveAll(repayments);
 
-        // Calculate total amount due (sum of all repayments)
-        double totalAmountDue = repayments.stream()
-                .mapToDouble(Repayment::getAmount)
-                .sum();
-
         // Update loan status if fully paid
-        if (selectedLoan.getTotalPaid() >= totalAmountDue) {
+        if (selectedLoan.getTotalPaid() >= selectedLoan.getTotalAmountDue()) {
             selectedLoan.setStatus("PAID");
         }
 

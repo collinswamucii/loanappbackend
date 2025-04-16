@@ -13,7 +13,9 @@ public class Repayment {
     private Long id;
     @ManyToOne
     private Loan loan;
-    private double amount;
+    private double principalAmount; // Principal portion of the payment
+    private double interestAmount; // Interest portion of the payment
+    private double amount; // Total amount (principal + interest)
     private Date dueDate;
-    private String status; //Pending, Paid
+    private String status;
 }

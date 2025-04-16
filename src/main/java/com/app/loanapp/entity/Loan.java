@@ -20,8 +20,9 @@ public class Loan {
     private int repaymentPeriod;
     @NotBlank(message = "Frequency cannot be blank")
     @Pattern(regexp = "^(WEEKLY|MONTHLY|YEARLY)$", message = "Frequency must be WEEKLY, MONTHLY, or YEARLY")
-    private String frequency; //weekly, monthly, yearly
+    private String frequency; // weekly, monthly, yearly
     private Date startDate;
     private double totalPaid;
-    private String status; //Active, Paid, Defaulted
+    private String status; // Active, Paid, Defaulted
+    private double totalAmountDue; // New field to store principal + interest
 }
