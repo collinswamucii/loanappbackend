@@ -16,13 +16,14 @@ public class Loan {
     @ManyToOne
     private Customer customer;
     private double principalAmount;
-    private double interestRate;
+    private double interestRate; // Annual percentage rate (p.a.)
     private int repaymentPeriod;
     @NotBlank(message = "Frequency cannot be blank")
     @Pattern(regexp = "^(WEEKLY|MONTHLY|YEARLY)$", message = "Frequency must be WEEKLY, MONTHLY, or YEARLY")
-    private String frequency; // weekly, monthly, yearly
+    private String frequency; // WEEKLY, MONTHLY, or YEARLY
     private Date startDate;
     private double totalPaid;
     private String status; // Active, Paid, Defaulted
-    private double totalAmountDue; // New field to store principal + interest
+    private double totalAmountDue; // Principal + interest
+    private double remainingBalance; // Total amount due - total paid
 }

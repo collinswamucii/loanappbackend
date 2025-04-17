@@ -1,76 +1,56 @@
 package com.app.loanapp.controller;
 
-import com.app.loanapp.dto.PaymentMessage;
+import com.app.loanapp.dto.MarkRepaymentRequest;
+import com.app.loanapp.dto.PaymentResponse;
 import com.app.loanapp.entity.Loan;
-import com.app.loanapp.repository.CustomerRepository;
+import com.app.loanapp.exception.NotFoundException;
 import com.app.loanapp.repository.LoanRepository;
-import com.app.loanapp.service.PaymentService;
-import com.app.loanapp.util.PaymentMessageParser;
-import jakarta.validation.Valid;
+import com.app.loanapp.service.LoanService;
+import com.app.loanapp.service.RepaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
 public class LoanController {
+
+    @Autowired
+    private LoanService loanService;
+
+    @Autowired
+    private RepaymentService repaymentService;
+
     @Autowired
     private LoanRepository loanRepository;
-    @Autowired
-    private CustomerRepository customerRepository;
-    @Autowired
-    private PaymentService paymentService;
 
     @PostMapping("/loans")
-    public ResponseEntity<Loan> createLoan(@Valid @RequestBody Loan loan) {
-        return ResponseEntity.ok(
-                customerRepository.findById(loan.getCustomer().getId())
-                        .map(customer -> {
-                            loan.setCustomer(customer);
-                            loan.setStartDate(new Date());
-                            loan.setStatus("ACTIVE");
-                            loan.setTotalPaid(0.0);
-                            return loanRepository.save(loan);
-                        })
-                        .orElseThrow(() -> new IllegalArgumentException("Customer not found with ID: " + loan.getCustomer().getId()))
-        );
+    public ResponseEntity<Loan> createLoan(@RequestBody Loan loan) {
+        Loan createdLoan = loanService.createLoan(loan);
+        return ResponseEntity.ok(createdLoan);
     }
 
     @GetMapping("/loans/customer/{customerId}")
-    public ResponseEntity<List<Loan>> getLoansByCustomer(@PathVariable Long customerId) {
-        return ResponseEntity.ok(loanRepository.findByCustomerId(customerId));
+    public ResponseEntity<List<Loan>> getLoansByCustomerId(@PathVariable Long customerId) {
+        List<Loan> loans = loanRepository.findByCustomerId(customerId);
+        return ResponseEntity.ok(loans);
     }
 
-    @PostMapping("/payments")
-    public ResponseEntity<Map<String, Object>> recordPayment(@RequestBody Map<String, String> paymentRequest) {
-        String message = paymentRequest.get("message");
-        if (message == null) {
-            throw new IllegalArgumentException("Payment message is required");
-        }
+    @PostMapping("/repayments/{loanId}/schedule")
+    public ResponseEntity<List<Loan>> generateRepaymentSchedule(@PathVariable Long loanId) {
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new NotFoundException("Loan not found with id: " + loanId));
+        repaymentService.generateRepaymentSchedule(loan);
+        List<Loan> loans = loanRepository.findByCustomerId(loan.getCustomer().getId());
+        return ResponseEntity.ok(loans);
+    }
 
-        // Parse the payment message
-        PaymentMessage paymentMessage = PaymentMessageParser.parse(message);
-
-        // Process the payment
-        Loan updatedLoan = paymentService.recordPayment(
-                paymentMessage.getPhoneNumber(),
-                paymentMessage
-        );
-
-        // Return a detailed response
-        return ResponseEntity.ok(Map.of(
-                "paymentRef", paymentMessage.getPaymentRef(),
-                "amount", paymentMessage.getAmount(),
-                "phoneNumber", paymentMessage.getPhoneNumber(),
-                "datePaid", paymentMessage.getDatePaid(),
-                "loanId", updatedLoan.getId(),
-                "totalPaid", updatedLoan.getTotalPaid(),
-                "status", updatedLoan.getStatus()
-        ));
+    @PostMapping("/repayments/{repaymentId}/mark-paid")
+    public ResponseEntity<PaymentResponse> markRepaymentAsPaid(@PathVariable Long repaymentId,
+                                                               @RequestBody MarkRepaymentRequest request) {
+        PaymentResponse response = repaymentService.markRepaymentAsPaid(repaymentId, request);
+        return ResponseEntity.ok(response);
     }
 }
