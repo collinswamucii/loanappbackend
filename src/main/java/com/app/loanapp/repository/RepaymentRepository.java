@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface RepaymentRepository extends JpaRepository<Repayment, Long> {
     List<Repayment> findByLoanIdOrderByDueDateAsc(Long loanId);
+    List<Repayment> findByLoanId(Long loanId);
 
     @Query("SELECT r FROM Repayment r WHERE r.loan.id = :loanId AND r.status = 'PENDING' ORDER BY r.dueDate ASC")
     List<Repayment> findPendingByLoanId(Long loanId);
