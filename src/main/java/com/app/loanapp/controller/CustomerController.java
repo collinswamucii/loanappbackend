@@ -1,8 +1,7 @@
 package com.app.loanapp.controller;
 
 import com.app.loanapp.entity.Customer;
-import com.app.loanapp.exception.NotFoundException;
-import com.app.loanapp.repository.CustomerRepository;
+import com.app.loanapp.service.CustomerService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,26 +15,25 @@ import java.util.List;
 public class CustomerController {
 
     @Autowired
-    private CustomerRepository customerRepository;
+    private CustomerService customerService;
 
     @PostMapping
     public ResponseEntity<Customer> createCustomer(@Valid @RequestBody Customer customer) {
-        // Check if the phone number already exists
-        if (customerRepository.findByPhone(customer.getPhone()).isPresent()) {
-            throw new IllegalArgumentException("Phone number already exists");
-        }
-        return new ResponseEntity<>(customerRepository.save(customer), HttpStatus.CREATED);
+        return new ResponseEntity<>(customerService.createCustomer(customer), HttpStatus.CREATED);
     }
 
     @GetMapping
     public ResponseEntity<List<Customer>> getAllCustomers() {
-        return ResponseEntity.ok(customerRepository.findAll());
+        return ResponseEntity.ok(customerService.getAllCustomers());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Customer> getCustomerById(@PathVariable Long id) {
-        Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Customer not found with id: " + id));
-        return ResponseEntity.ok(customer);
+        return ResponseEntity.ok(customerService.getCustomerById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Customer> updateCustomer(@PathVariable Long id, @Valid @RequestBody Customer updatedCustomer) {
+        return ResponseEntity.ok(customerService.updateCustomer(id, updatedCustomer));
     }
 }
